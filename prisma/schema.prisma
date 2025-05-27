@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "../app/generated/prisma"
+  output   = "../generated/prisma"
 }
 
 datasource db {
@@ -34,11 +34,12 @@ model Post {
 
 model Candidat {
   id               Int           @id @default(autoincrement())
+  numero Int @unique
   prenoms          String        @db.VarChar(255)
   nom              String        @db.VarChar(255)
   date_naissance   DateTime      @db.Date
   lieu_naissance   String        @db.VarChar(255)
-  sexe             String        @default("M") @db.VarChar(255)
+  sexe             String        @default("MASCULIN") @db.VarChar(255)
   aptitude         String        @default("Apte") @db.VarChar(255)
   section          String        @default("Moderne") @db.VarChar(255)
   option           String        @default("ESPAGNOL") @db.VarChar(255)
