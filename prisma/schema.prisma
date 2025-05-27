@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
   output   = "../app/generated/prisma"
@@ -14,3 +8,147 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model anonymat {
+  id         BigInt    @id @default(autoincrement())
+  candidatId BigInt
+  code       String    @unique(map: "anonymat_code_unique") @db.VarChar(255)
+  candidats  candidats @relation(fields: [candidatId], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "anonymat_candidatid_foreign")
+
+  @@index([candidatId], map: "anonymat_candidatid_index")
+}
+
+model candidats {
+  id               BigInt         @id @default(autoincrement())
+  prenoms          String         @db.VarChar(255)
+  nom              String         @db.VarChar(255)
+  date_naissance   DateTime       @db.Date
+  lieu_naissance   String         @db.VarChar(255)
+  sexe             String         @default("M") @db.VarChar(255)
+  aptitude         String         @default("Apte") @db.VarChar(255)
+  section          String         @default("Moderne") @db.VarChar(255)
+  option           String         @default("ESPAGNOL") @db.VarChar(255)
+  etat             Boolean        @default(true)
+  etablissement_id BigInt
+  anonymat         anonymat[]
+  etablissements   etablissements @relation(fields: [etablissement_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "candidats_etablissement_id_foreign")
+  notes            notes[]
+  resultats        resultats[]
+}
+
+model centres {
+  id      BigInt  @id
+  name    String?
+  slug    String?
+  zone    String?
+  contact String?
+  jurys   jurys[]
+}
+
+model contacts {
+  id          Int      @id @default(autoincrement())
+  prenom      String
+  nom         String
+  email       String   @unique
+  description String?
+  phone       String?
+  adresse     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime
+}
+
+model etablissements {
+  id        BigInt      @id @default(autoincrement())
+  name      String      @db.VarChar(255)
+  slug      String      @unique(map: "etablissements_slug_unique") @db.VarChar(255)
+  candidats candidats[]
+}
+
+model groupes {
+  id        BigInt      @id @default(autoincrement())
+  name      String      @db.VarChar(255)
+  slug      String      @db.VarChar(255)
+  total     Decimal     @db.Decimal(8, 2)
+  notes     notes[]
+  resultats resultats[]
+}
+
+model jurys {
+  id        BigInt   @id @default(autoincrement())
+  numero    Int
+  centre_id BigInt?
+  president String?
+  centres   centres? @relation(fields: [centre_id], references: [id], onDelete: NoAction, map: "jurys_centre__id_foreign")
+}
+
+model matieres {
+  id          BigInt  @id @default(autoincrement())
+  name        String? @unique(map: "matieres_name_unique") @db.VarChar(255)
+  slug        BigInt?
+  coefficient Int
+  notes       notes[]
+
+  @@index([slug], map: "matieres_slug_index")
+}
+
+model notes {
+  id          BigInt    @id @default(autoincrement())
+  candidat_id BigInt
+  matiere_id  BigInt
+  score       Decimal   @db.Decimal(8, 2)
+  groupe_id   BigInt
+  candidats   candidats @relation(fields: [candidat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "notes_candidat_id_foreign")
+  groupes     groupes   @relation(fields: [groupe_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "notes_groupe_id_foreign")
+  matieres    matieres  @relation(fields: [matiere_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "notes_matiere_id_foreign")
+}
+
+model resultats {
+  id          BigInt    @id @default(autoincrement())
+  candidat_id BigInt
+  total       Decimal?  @db.Decimal(8, 2)
+  moyenne     Decimal?  @db.Decimal(8, 2)
+  rang        Int?
+  groupe_id   BigInt
+  candidats   candidats @relation(fields: [candidat_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "resultats_candidat_id_foreign")
+  groupes     groupes   @relation(fields: [groupe_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "resultats_groupe_id_foreign")
+}
+
+enum Aptitude {
+  APTE
+  INAPTE
+}
+
+enum EpOptionnel {
+  ESPAGNOL
+  ALLEMAND
+  ITALIEN
+  ARABE
+  PORTUGAIS
+  RUSSE
+  TECHNOLOGIE
+  ECONOMIE_FAMILIALE
+}
+
+enum Gender {
+  MASCULIN
+  FEMININ
+}
+
+enum PresenceType {
+  PRESENT
+  ABSENT
+}
+
+enum Statut {
+  PU
+  PR
+  CL
+}
+
+enum TypeEtablissement {
+  COLLEGE
+  LYCEE
+  MIXTE_LYCEE_COLLEGE
+  COLLEGE_PRIVE
+  COLLEGE_PRIVE_MIXTE
+  LYCEE_PRIVE_MIXTE
+}
